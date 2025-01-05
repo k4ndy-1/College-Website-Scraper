@@ -2,3 +2,4 @@ streamlit
 selenium
 chromedriver-autoinstaller
 pandas
+webdriver_manager
