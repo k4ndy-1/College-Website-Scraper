@@ -2,6 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
 
@@ -20,14 +22,13 @@ def get_top_colleges(stream, city):
     driver = webdriver.Chrome(service=service, options=options)
     
     # Modify the URL to include city (we're assuming a city filter can be added in the URL)
-    # This is a placeholder, you may need to update the actual URL structure for city filtering
     url = f"https://www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
     
     # Open the page
     driver.get(url)
 
-    # Give time for the page to load
-    time.sleep(5)  # Adjust sleep time based on your network speed
+    # Wait for the page to load (use explicit wait)
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")))
 
     # Scrape the college names, cities, entrance exams, and cutoff
     colleges = []
@@ -39,13 +40,14 @@ def get_top_colleges(stream, city):
         # Scrape the city name using the updated XPath
         city_elements = driver.find_elements(By.XPATH, "//span[@class='jsx-3230181281 pr-1 location']")
         
-        # Scrape the entrance exam name and cutoff using the updated XPath
-        exam_elements = driver.find_elements(By.XPATH, "//button[contains(@class, 'jsx-3230181281 course')]")
+        # Scrape the entrance exam name and cutoff using a new XPath (you may need to inspect the page to find the correct XPath)
+        # Example: using the XPath for the salary/fees or any specific entrance exam info
+        package_elements = driver.find_elements(By.XPATH, "//span[contains(text(), '₹')]")  # Adjust as needed
         
         for i in range(len(college_elements)):
             college_name = college_elements[i].text.strip()
             city_name = city_elements[i].text.strip() if i < len(city_elements) else "N/A"  # Default to "N/A" if city is missing
-            entrance_exam_info = exam_elements[i].text.strip() if i < len(exam_elements) else "N/A"  # Default to "N/A" if entrance exam info is missing
+            entrance_exam_info = package_elements[i].text.strip() if i < len(package_elements) else "N/A"  # Default to "N/A" if entrance exam info is missing
 
             if college_name:  # Avoid adding empty names
                 colleges.append((college_name, city_name, entrance_exam_info))
@@ -73,7 +75,7 @@ def main():
         # Save the results to a CSV file
         try:
             # Convert the list of tuples into a DataFrame
-            df = pd.DataFrame(colleges, columns=["College Name", "City", "Entrance Exam and Cutoff"])
+            df = pd.DataFrame(colleges, columns=["College Name", "City", "Package"])
             df.to_csv(f"top_{stream}_{city}_colleges.csv", index=False)
             print(f"Top colleges for {stream} in {city} have been saved to 'top_{stream}_{city}_colleges.csv'")
         except Exception as e:
