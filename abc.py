@@ -10,7 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import os
-os.chmod('./chromedriver', 0755)
+os.chmod('chromedriver', 0o755)
 
 # Setup headless mode for Chrome
 chrome_options = Options()
