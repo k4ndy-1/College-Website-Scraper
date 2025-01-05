@@ -36,7 +36,7 @@ def get_top_colleges(stream,city):
        
         
         # Modify the URL to include city (we're assuming a city filter can be added in the URL)
-        url = f"https://www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
+        url = f"https:/www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
         
         # Open the page
         driver.get(url)
