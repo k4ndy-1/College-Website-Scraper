@@ -15,7 +15,7 @@ def get_top_colleges(stream, city):
     A pandas DataFrame containing college names, cities, and package information.
   """
   try:
-    url = f"https://www.collegedunia.com/{stream}/{city}-colleges"
+    url = f"https://www.collegesearch.in/{stream}/colleges-{city}"
     response = requests.get(url)
     response.raise_for_status()  # Raise an exception for bad status codes
 
