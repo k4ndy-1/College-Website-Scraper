@@ -7,12 +7,12 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import chromedriver_autoinstaller
+import os
 
 # Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
-    # Automatically download and install the right version of chromedriver
-    chromedriver_autoinstaller.install()
+    # Path to the locally uploaded chromedriver (ensure it's in the right folder)
+    chromedriver_path = "./drivers/chromedriver"  # Ensure the correct path to chromedriver
 
     # Setting up Selenium with headless Chrome
     options = Options()
@@ -21,7 +21,7 @@ def get_top_colleges(stream, city):
     options.add_argument("--disable-dev-shm-usage")  # Fixes some issues with limited memory in cloud
 
     # Set the ChromeDriver Service
-    service = Service(chromedriver_autoinstaller.install())  # Automatically installs the chromedriver
+    service = Service(chromedriver_path)  # Use the path to your local ChromeDriver
     driver = webdriver.Chrome(service=service, options=options)
 
     # URL of the colleges page based on stream and city
