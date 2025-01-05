@@ -11,6 +11,10 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import os
 os.chmod('./chromedriver', 0o755)
+from pyvirtualdisplay import Display
+display = Display(visible=0, size=(800, 800))  
+display.start()
+driver = webdriver.Chrome()
 
 # Setup headless mode for Chrome
 chrome_options = Options()
