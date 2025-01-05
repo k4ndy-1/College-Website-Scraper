@@ -15,7 +15,7 @@ def get_top_colleges(stream):
     or an empty DataFrame if no data is found.
   """
   try:
-    url = f"https://www.collegesearch.in/{stream}/colleges"  # Adjust URL as needed
+    url = f"https://www.collegesearch.in/{stream}"  # Adjust URL as needed
     response = requests.get(url)
     response.raise_for_status()  # Raise an exception for bad status codes
 
