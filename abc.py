@@ -21,23 +21,19 @@ def get_top_colleges(stream):
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extract college names (adjust XPath as needed)
     college_names = [
         element.text.strip() 
-        for element in soup.find_all("a", class_="jsx-3230181281 college_name underline-on-hover")
+        for element in soup.find_all("h3", class_="college-name") 
     ]
-
-    # Extract city names (adjust XPath as needed)
+    
     city_names = [
-        element.text.strip() 
-        for element in soup.find_all("span", class_="jsx-3230181281 pr-1 location") 
+        element.find("span", class_="city").text.strip() 
+        for element in soup.find_all("div", class_="college-card") 
     ]
-
-    # Extract package information (adjust XPath as needed)
+    
     package_infos = [
-        element.text.strip() 
-        for element in soup.find_all("span", text=True) 
-        if "₹" in element.text
+        element.find("span", class_="average-package").text.strip() 
+        for element in soup.find_all("div", class_="college-details") 
     ]
 
     # Find the minimum length of the lists to avoid errors
