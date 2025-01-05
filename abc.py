@@ -1,102 +1,89 @@
 import streamlit as st
 import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
+import requests
+from bs4 import BeautifulSoup
 
-# Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
-    # Setup Selenium WebDriver options for headless mode with necessary arguments
-    options = Options()
-    options.headless = True  # Run in headless mode (without GUI)
-    options.add_argument("--no-sandbox")  # Overcome potential issue in cloud environments
-    options.add_argument("--disable-dev-shm-usage")  # Fixes some issues with limited memory in cloud
-    options.add_argument("--disable-gpu")  # Disable GPU to prevent issues in headless mode
-    options.add_argument("--remote-debugging-port=9222")  # Set a debugging port for better stability
+  """
+  Fetches top colleges from Collegedunia using BeautifulSoup.
 
-    # Setup WebDriver using ChromeDriverManager to automatically get the correct version
-    service = Service(ChromeDriverManager().install())  # Automatically manage ChromeDriver
-    driver = webdriver.Chrome(service=service, options=options)
-    
-    # Modify the URL to include city and stream for search
+  Args:
+    stream: The desired academic stream (e.g., "engineering", "mbbs").
+    city: The desired city (e.g., "delhi", "bangalore").
+
+  Returns:
+    A pandas DataFrame containing college names, cities, and package information.
+  """
+  try:
     url = f"https://www.collegedunia.com/{stream}/{city}-colleges"
-    
-    try:
-        # Open the page
-        driver.get(url)
-        
-        # Wait for the page to load and the relevant element to appear
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-            (By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")
-        ))
+    response = requests.get(url)
+    response.raise_for_status()  # Raise an exception for bad status codes
 
-        colleges = []
+    soup = BeautifulSoup(response.content, "html.parser")
 
-        # Scrape the college names, cities, and entrance exams
-        college_elements = driver.find_elements(By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")
-        city_elements = driver.find_elements(By.XPATH, "//span[@class='jsx-3230181281 pr-1 location']")
-        package_elements = driver.find_elements(By.XPATH, "//span[contains(text(), '₹')]")  # Adjust as needed
-        
-        for i in range(len(college_elements)):
-            college_name = college_elements[i].text.strip()
-            city_name = city_elements[i].text.strip() if i < len(city_elements) else "N/A"  # Default to "N/A" if city is missing
-            entrance_exam_info = package_elements[i].text.strip() if i < len(package_elements) else "N/A"  # Default to "N/A" if entrance exam info is missing
+    # Extract college names
+    college_names = [
+        element.text.strip() 
+        for element in soup.find_all("a", class_="jsx-3230181281 college_name underline-on-hover")
+    ]
 
-            if college_name:  # Avoid adding empty names
-                colleges.append((college_name, city_name, entrance_exam_info))
+    # Extract city names (adjust XPath as needed)
+    city_names = [
+        element.text.strip() 
+        for element in soup.find_all("span", class_="jsx-3230181281 pr-1 location")
+    ]
 
-        # Return the list of colleges, cities, and entrance exams
-        return colleges
+    # Extract package information (adjust XPath as needed)
+    package_infos = [
+        element.text.strip() 
+        for element in soup.find_all("span", text=True) 
+        if "₹" in element.text
+    ]
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return []
+    # Create a DataFrame
+    data = {
+        "College Name": college_names,
+        "City": city_names,
+        "Package": package_infos,
+    }
+    df = pd.DataFrame(data)
 
-    finally:
-        # Close the WebDriver session
-        driver.quit()
+    return df
+
+  except requests.exceptions.RequestException as e:
+    st.error(f"Error fetching data: {e}")
+    return pd.DataFrame()
+
+  except Exception as e:
+    st.error(f"An error occurred: {e}")
+    return pd.DataFrame()
 
 # Streamlit App main function
 def main():
-    # Set up the Streamlit interface
-    st.title("Top Colleges Finder")
+  st.title("Top Colleges Finder")
 
-    # Ask the user for the stream and city they are interested in
-    stream = st.text_input("Enter the stream (e.g., MBBS, Engineering, Law):").strip().lower()
-    city = st.text_input("Enter the city (e.g., Delhi, Bangalore, Mumbai):").strip().lower()
+  stream = st.text_input("Enter the stream (e.g., engineering, mbbs):").strip().lower()
+  city = st.text_input("Enter the city (e.g., delhi, bangalore):").strip().lower()
 
-    # Check if the user has provided input
-    if st.button("Get Top Colleges"):
-        if stream and city:
-            # Get the top colleges for the stream and city
-            colleges = get_top_colleges(stream, city)
+  if st.button("Get Top Colleges"):
+    if stream and city:
+      df = get_top_colleges(stream, city)
 
-            if colleges:
-                # Convert the list of tuples into a DataFrame
-                df = pd.DataFrame(colleges, columns=["College Name", "City", "Package"])
-                
-                # Display the results in a table
-                st.write(f"Top Colleges for {stream} in {city}:")
-                st.dataframe(df)
+      if not df.empty:
+        st.write(f"Top Colleges for {stream} in {city}:")
+        st.dataframe(df)
 
-                # Provide download option
-                csv = df.to_csv(index=False)
-                st.download_button(
-                    label="Download CSV",
-                    data=csv,
-                    file_name=f"top_{stream}_{city}_colleges.csv",
-                    mime="text/csv"
-                )
+        csv = df.to_csv(index=False)
+        st.download_button(
+            label="Download CSV",
+            data=csv,
+            file_name=f"top_{stream}_{city}_colleges.csv",
+            mime="text/csv"
+        )
+      else:
+        st.write(f"No colleges found for {stream} in {city}. Please try again later.")
+    else:
+      st.warning("Please enter both stream and city.")
 
-            else:
-                st.write(f"No colleges found for {stream} in {city}. Please try again later.")
-        else:
-            st.warning("Please enter both stream and city.")
-
-# Run the Streamlit app
 if __name__ == "__main__":
-    main()
+  main()
