@@ -1,4 +1,3 @@
 streamlit
 seleniumbase
-webdriver-manager
-pyvirtualdisplay
+webdriver-manager==4.0.2
