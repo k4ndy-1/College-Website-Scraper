@@ -98,7 +98,7 @@ def main():
     if st.button("Get Top Colleges"):
         if stream and city:
             # Get the top colleges for the stream and city
-            colleges = get_top_colleges(stream, city)
+            colleges = site_extraction_page(stream, city)
 
             if colleges:
                 # Convert the list of tuples into a DataFrame
