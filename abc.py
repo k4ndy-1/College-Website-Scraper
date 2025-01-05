@@ -16,9 +16,6 @@ chrome_options.add_argument("--headless")  # Run Chrome in headless mode
 chrome_options.add_argument("--no-sandbox")  # Helps avoid issues in certain environments (e.g., Docker, Streamlit Cloud)
 chrome_options.add_argument("--disable-dev-shm-usage")  # Prevents crashes in Docker containers
 
-# Use ChromeDriverManager to automatically download the correct version of chromedriver
-driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
-
 
 
 # Function to get top colleges based on stream and city
