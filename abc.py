@@ -13,33 +13,7 @@ import pandas as pd
 # ------------- Settings for Pages -----------
 st.set_page_config(layout="wide")
 
-# Function to get website content
-def get_website_content(url):
-    driver = None
-    try:
-        # Setup the driver
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
-        options.add_argument('--disable-gpu')
-        options.add_argument('--window-size=1920x1200')
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-        driver.get(url)
 
-        # Wait until the page is fully loaded
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
-        )
-        
-        html_doc = driver.page_source
-        soup = BeautifulSoup(html_doc, "html.parser")
-        return soup.get_text()
-
-    except Exception as e:
-        st.write(f"ERROR: {e}")
-    finally:
-        if driver:
-            driver.quit()
-    return None
 
 # Extract college details from the website
 def site_extraction_page(stream,city):
