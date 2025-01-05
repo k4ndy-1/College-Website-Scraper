@@ -22,7 +22,8 @@ def clean_text(row_text):
         r"OI \(.*?\)",   # Matches 'OI (100)' and similar patterns
         r"PERCEPTION \(.*?\)", # Matches 'PERCEPTION (100)' and similar patterns
         r"\|",           # Matches the pipe character '|'
-        r"\s{2,}" # Matches any decimal number like '80.01', '95.79', etc.
+        r"\s{2,}",        # Matches multiple spaces and replaces them with a single space
+        r"\d+\.\d{2}",    # Matches any decimal number like '80.01', '95.79', etc.
     ]
     
     for pattern in unwanted_patterns:
@@ -81,6 +82,10 @@ def scrape_nirf_rankings(category):
             state = clean_text(columns[3].text.strip())
             rank = clean_text(columns[4].text.strip())
             score = clean_text(columns[-1].text.strip())  # Assuming the last column contains the score
+
+            # Check if city and state are not empty after cleaning
+            if not city or not state:
+                continue  # Skip the row if city or state is missing
 
             # Append cleaned data to lists
             ins_id.append(inid)
