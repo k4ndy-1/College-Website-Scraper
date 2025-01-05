@@ -42,7 +42,7 @@ def get_website_content(url):
     return None
 
 # Extract college details from the website
-def site_extraction_page():
+def site_extraction_page(stream,city):
     SAMPLE_URL = "https://www.collegedunia.com"
     url = st.text_input(label="URL", placeholder="https://example.com", value=SAMPLE_URL)
 
