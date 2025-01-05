@@ -37,29 +37,37 @@ def scrape_nirf_rankings(category):
     rows = table.find_all("tr")[1:]  # Skip header row
     
     # Extracting the required details
+    ins_id=[]
     ranks = []
     names = []
     cities = []
     scores = []
+    states= []
     
     for row in rows:
         columns = row.find_all("td")
         if len(columns) > 1:
-            rank = columns[0].text.strip()
+            inid = columns[0].text.strip()
             name = columns[1].text.strip()
             city = columns[2].text.strip()
+            state=column[3].text.strip()
+            rank=column[4].text.strip()
             score = columns[-1].text.strip()  # Assuming the last column contains the score
             
-            ranks.append(rank)
+            ins_id.append(inid)
             names.append(name)
             cities.append(city)
+            states.append(state)
+            ranks.append(rank)
             scores.append(score)
 
     # Create a DataFrame
     data = {
-        "Rank": ranks,
+        "Institute ID": ins_id,
         "Institution Name": names,
         "City": cities,
+        "State": states,
+        "Rank": ranks,
         "Score": scores
     }
     
