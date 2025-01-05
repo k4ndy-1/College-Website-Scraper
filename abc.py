@@ -10,17 +10,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-from pyvirtualdisplay import Display
-display = Display(visible=0, size=(800, 800))  
-display.start()
-driver = webdriver.Chrome()
-
-# Setup headless mode for Chrome
-chrome_options = Options()
-chrome_options.add_argument("--headless")  # Run Chrome in headless mode
-chrome_options.add_argument("--no-sandbox")  # Helps avoid issues in certain environments (e.g., Docker, Streamlit Cloud)
-chrome_options.add_argument("--disable-dev-shm-usage")  # Prevents crashes in Docker containers
-
 
 
 # Function to get top colleges based on stream and city
