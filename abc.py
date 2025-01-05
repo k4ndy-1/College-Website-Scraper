@@ -34,7 +34,7 @@ def scrape_nirf_rankings(category):
         return pd.DataFrame()
 
     # Parse the table rows, skipping the header row
-    rows = table.find_all("tr")[1:]  # Skip header row
+    rows = table.find_all("tr")[1:]
 
     # Extracting the required details
     institute_ids = []
@@ -48,7 +48,7 @@ def scrape_nirf_rankings(category):
         columns = row.find_all("td")
         
         # Ensure that the row has enough columns to extract the data
-        if len(columns) == 6:  # We expect exactly 6 columns (Institute ID, Name, City, State, Score, Rank)
+        if len(columns) >= 6:  # We expect at least 6 columns (Institute ID, Name, City, State, Score, Rank)
             try:
                 # Extracting each column based on the expected structure
                 institute_id = columns[0].text.strip()   # Institute ID
@@ -69,8 +69,8 @@ def scrape_nirf_rankings(category):
                 st.warning("Error processing a row in the table. Skipping this row.")
                 continue  # Skip the current row if an IndexError occurs
         else:
-            # Skipping rows that don't have exactly 6 columns
-            st.warning("Skipping malformed row (not enough columns).")
+            st.warning("Skipping malformed row with insufficient columns.")
+            continue  # Skip rows that don't have the expected number of columns
 
     # Create a DataFrame
     data = {
