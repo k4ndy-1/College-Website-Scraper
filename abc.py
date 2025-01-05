@@ -28,6 +28,9 @@ def clean_row_data(row_text):
     
     for pattern in unwanted_patterns:
         row_text = re.sub(pattern, "", row_text)
+
+    # Remove any unnecessary numbers that are not part of the rank/score
+    row_text = re.sub(r"(?<!\w)(\d+\.\d{2})(?!\w)", "", row_text)  # Only remove numbers like 95.79
     
     return row_text.strip()
 
@@ -72,7 +75,11 @@ def scrape_nirf_rankings(category):
     scores = []
     states = []
     
-    for row in rows:
+    for index, row in enumerate(rows):
+        # Skip odd-numbered rows
+        if index % 2 != 0:
+            continue
+
         columns = row.find_all("td")
         if len(columns) > 1:
             inid = clean_row_data(columns[0].text.strip())
