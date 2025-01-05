@@ -26,8 +26,8 @@ def scrape_nirf_rankings(category):
     
     soup = BeautifulSoup(response.content, "html.parser")
     
-    # Find the ranking table (this needs to be customized based on the actual structure of the table)
-    table = soup.find("table", {"class": "table table-bordered"})
+    # Find the ranking table using the provided table ID
+    table = soup.find("table", {"id": "tbl_overall"})
 
     if not table:
         st.error("Ranking table not found")
