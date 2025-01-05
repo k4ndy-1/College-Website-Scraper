@@ -85,9 +85,8 @@ def get_top_colleges(stream, city):
         return []
 
     finally:
-        if driver is not None: driver.quit()
-    return None
-
+        if driver is not None:
+            driver.quit()
 # Streamlit App main function
 def main():
     # Set up the Streamlit interface
