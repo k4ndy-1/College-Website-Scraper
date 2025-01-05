@@ -10,7 +10,10 @@ import pandas as pd
 # Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
     # Set up Selenium WebDriver (make sure the driver is in the PATH or specify the path)
-    
+    driver_path = './chromedriver.exe'  # Replace this with the path to your ChromeDriver executable
+
+    # Setup Service for WebDriver
+    service = Service(driver_path)
     
     # Optionally, set some options for the browser (headless mode, etc.)
     options = Options()
