@@ -1,81 +1,87 @@
-import streamlit as st
-import pandas as pd
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import streamlit as st
 
-def get_top_colleges(course):
+def scrape_nirf_rankings(category):
     """
-    Fetches top colleges from Collegesearch.in based on the user's course selection.
+    Scrapes NIRF India rankings for a specified category.
 
     Args:
-        course: The desired course (e.g., "engineering", "mbbs").
+        category: The category of the rankings (e.g., 'engineering', 'management', 'university').
 
     Returns:
-        A pandas DataFrame containing college names, cities, and package information,
-        or an empty DataFrame if no data is found.
+        A pandas DataFrame containing the rankings data (rank, name, city, score).
     """
-    try:
-        url = f"https://www.collegesearch.in/{course}"  # The URL changes based on course
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for bad status codes
-
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        # Fetching college names, cities, and package info (update the selectors based on actual website)
-        college_names = [
-            element.text.strip() 
-            for element in soup.find_all("div", class_="college-name-class")  # Update with correct class or tag
-        ]
-
-        city_names = [
-            element.text.strip() 
-            for element in soup.find_all("span", class_="city-name-class")  # Update with correct class or tag
-        ]
-
-        package_infos = [
-            element.text.strip() 
-            for element in soup.find_all("span", class_="package-info-class")  # Update with correct class or tag
-        ]
-
-        # Find the minimum length of the lists to avoid errors
-        min_length = min(len(college_names), len(city_names), len(package_infos))
-
-        # Trim lists to the minimum length
-        college_names = college_names[:min_length]
-        city_names = city_names[:min_length]
-        package_infos = package_infos[:min_length]
-
-        # Create a DataFrame
-        data = {
-            "College Name": college_names,
-            "City": city_names,
-            "Package": package_infos,
-        }
-        df = pd.DataFrame(data)
-
-        return df
-
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching data: {e}")
+    base_url = "https://www.nirfindia.org"
+    
+    # URL based on the selected category
+    category_url = f"{base_url}/{category}.php"  # Adjust the URL structure based on the NIRF website
+    response = requests.get(category_url)
+    
+    if response.status_code != 200:
+        st.error("Failed to fetch data")
+        return pd.DataFrame()
+    
+    soup = BeautifulSoup(response.content, "html.parser")
+    
+    # Find the ranking table (this needs to be customized based on the actual structure of the table)
+    table = soup.find("table", {"class": "table table-bordered"})
+    
+    if not table:
+        st.error("Ranking table not found")
         return pd.DataFrame()
 
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-        return pd.DataFrame()
+    # Parse the table rows
+    rows = table.find_all("tr")[1:]  # Skip header row
+    
+    # Extracting the required details
+    ranks = []
+    names = []
+    cities = []
+    scores = []
+    
+    for row in rows:
+        columns = row.find_all("td")
+        if len(columns) > 1:
+            rank = columns[0].text.strip()
+            name = columns[1].text.strip()
+            city = columns[2].text.strip()
+            score = columns[-1].text.strip()  # Assuming the last column contains the score
+            
+            ranks.append(rank)
+            names.append(name)
+            cities.append(city)
+            scores.append(score)
+
+    # Create a DataFrame
+    data = {
+        "Rank": ranks,
+        "Institution Name": names,
+        "City": cities,
+        "Score": scores
+    }
+    
+    df = pd.DataFrame(data)
+    return df
 
 # Streamlit App main function
 def main():
-    st.title("Top Colleges Finder")
+    st.title("NIRF India Rankings Scraper")
 
-    # Ask the user to input the course they are interested in
-    course = st.text_input("Enter the course (e.g., engineering, mbbs):").strip().lower()
+    # Ask the user to input the category
+    category = st.selectbox(
+        "Select the category you want to scrape:",
+        ["engineering", "management", "university", "law", "medical", "pharmacy", "architecture"]
+    )
 
-    if st.button("Get Top Colleges"):
-        if course:
-            df = get_top_colleges(course)
+    # Scrape the data for the selected category
+    if st.button("Get Rankings"):
+        if category:
+            df = scrape_nirf_rankings(category)
 
             if not df.empty:
-                st.write(f"Top Colleges for {course}:")
+                st.write(f"Top NIRF Rankings for {category.capitalize()}:")
                 st.dataframe(df)
 
                 # Add the option to download the result as a CSV
@@ -83,13 +89,13 @@ def main():
                 st.download_button(
                     label="Download CSV",
                     data=csv,
-                    file_name=f"top_{course}_colleges.csv",
+                    file_name=f"nirf_{category}_rankings.csv",
                     mime="text/csv"
                 )
             else:
-                st.write(f"No colleges found for {course}.")
+                st.write(f"No rankings found for {category.capitalize()}.")
         else:
-            st.warning("Please enter a course name.")
+            st.warning("Please select a category.")
 
 if __name__ == "__main__":
     main()
