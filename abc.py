@@ -21,7 +21,7 @@ def scrape_nirf_rankings(category):
     response = requests.get(category_url)
     
     if response.status_code != 200:
-        st.error("Failed to fetch data. Please check the category.")
+        st.error(f"Failed to fetch data from {category_url}. Please check the category.")
         return pd.DataFrame()
     
     soup = BeautifulSoup(response.content, "html.parser")
@@ -30,12 +30,12 @@ def scrape_nirf_rankings(category):
     table = soup.find("table", {"id": "tbl_overall"})
 
     if not table:
-        st.error("Ranking table not found")
+        st.error("Ranking table not found. Please check the category URL.")
         return pd.DataFrame()
 
-    # Parse the table rows
-    rows = table.find_all("tr")[1:]  # Skip header row
-    
+    # Parse the table rows, skipping the header row
+    rows = table.find_all("tr")[1:]
+
     # Extracting the required details
     institute_ids = []
     names = []
@@ -46,22 +46,31 @@ def scrape_nirf_rankings(category):
     
     for row in rows:
         columns = row.find_all("td")
-        if len(columns) > 1:
-            # Extracting each column based on the structure
-            institute_id = columns[0].text.strip()   # Institute ID
-            name = columns[1].text.strip()            # Name
-            city = columns[2].text.strip()            # City
-            state = columns[3].text.strip()           # State
-            score = columns[4].text.strip()           # Score
-            rank = columns[5].text.strip()            # Rank
-            
-            # Append to lists
-            institute_ids.append(institute_id)
-            names.append(name)
-            cities.append(city)
-            states.append(state)
-            scores.append(score)
-            ranks.append(rank)
+        
+        # Ensure that the row has enough columns to extract the data
+        if len(columns) >= 6:  # We expect at least 6 columns (Institute ID, Name, City, State, Score, Rank)
+            try:
+                # Extracting each column based on the expected structure
+                institute_id = columns[0].text.strip()   # Institute ID
+                name = columns[1].text.strip()            # Name
+                city = columns[2].text.strip()            # City
+                state = columns[3].text.strip()           # State
+                score = columns[4].text.strip()           # Score
+                rank = columns[5].text.strip()            # Rank
+
+                # Append to lists
+                institute_ids.append(institute_id)
+                names.append(name)
+                cities.append(city)
+                states.append(state)
+                scores.append(score)
+                ranks.append(rank)
+            except IndexError:
+                st.warning("Error processing a row in the table. Skipping this row.")
+                continue  # Skip the current row if an IndexError occurs
+        else:
+            st.warning("Skipping malformed row with insufficient columns.")
+            continue  # Skip rows that don't have the expected number of columns
 
     # Create a DataFrame
     data = {
