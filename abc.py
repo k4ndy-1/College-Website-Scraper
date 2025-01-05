@@ -11,7 +11,7 @@ def scrape_nirf_rankings(category):
         category: The category of the rankings (e.g., 'engineering', 'management', 'university').
 
     Returns:
-        A pandas DataFrame containing the rankings data (rank, name, city, score).
+        A pandas DataFrame containing the rankings data (Institute ID, Name, City, State, Score, Rank).
     """
     # Base URL and the category URL pattern
     base_url = "https://www.nirfindia.org/Rankings/2024/"
@@ -37,30 +37,40 @@ def scrape_nirf_rankings(category):
     rows = table.find_all("tr")[1:]  # Skip header row
     
     # Extracting the required details
-    ranks = []
+    institute_ids = []
     names = []
     cities = []
+    states = []
     scores = []
+    ranks = []
     
     for row in rows:
         columns = row.find_all("td")
         if len(columns) > 1:
-            rank = columns[0].text.strip()
-            name = columns[1].text.strip()
-            city = columns[2].text.strip()
-            score = columns[-1].text.strip()  # Assuming the last column contains the score
+            # Extracting each column based on the structure
+            institute_id = columns[0].text.strip()   # Institute ID
+            name = columns[1].text.strip()            # Name
+            city = columns[2].text.strip()            # City
+            state = columns[3].text.strip()           # State
+            score = columns[4].text.strip()           # Score
+            rank = columns[5].text.strip()            # Rank
             
-            ranks.append(rank)
+            # Append to lists
+            institute_ids.append(institute_id)
             names.append(name)
             cities.append(city)
+            states.append(state)
             scores.append(score)
+            ranks.append(rank)
 
     # Create a DataFrame
     data = {
-        "Rank": ranks,
-        "Institution Name": names,
+        "Institute ID": institute_ids,
+        "Name": names,
         "City": cities,
-        "Score": scores
+        "State": states,
+        "Score": scores,
+        "Rank": ranks
     }
     
     df = pd.DataFrame(data)
