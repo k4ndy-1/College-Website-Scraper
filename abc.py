@@ -40,15 +40,6 @@ def get_website_content(url):
 # ---------------- Page & UI/UX Components ------------------------
 # Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
-    # Set up Selenium WebDriver (make sure the driver is in the PATH or specify the path)
-    driver_path = './chromedriver.exe'  # Replace this with the path to your ChromeDriver executable
-
-    # Setup Service for WebDriver
-    service = Service(driver_path)
-    
-    # Optionally, set some options for the browser (headless mode, etc.)
-    options = Options()
-    options.headless = False  # Set to True if you want to run the browser in headless mode (without GUI)
 
     # Launch Chrome with the specified Service and Options
     driver = webdriver.Chrome(service=service, options=options)
