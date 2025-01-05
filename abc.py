@@ -76,7 +76,7 @@ def scrape_nirf_rankings(category):
     states = []
     
     for index, row in enumerate(rows):
-        # Skip odd-numbered rows
+        # Skip odd-numbered rows (odd index)
         if index % 2 != 0:
             continue
 
