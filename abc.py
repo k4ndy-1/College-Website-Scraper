@@ -24,6 +24,7 @@ def clean_row_data(row_text):
         r"PERCEPTION \(.*?\)", # Matches 'PERCEPTION (100)' and similar patterns
         r"\|",              # Matches '|' symbol
         r"\s{2,}",           # Matches multiple spaces and replaces with a single space
+        r"\d+\.\d{2}",      # Matches floating-point numbers like '95.79', '93.10'
     ]
     
     for pattern in unwanted_patterns:
