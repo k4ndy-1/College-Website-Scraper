@@ -18,8 +18,7 @@ def get_website_content(url):
     content = None
     
     try:
-        # Automatically install and set up ChromeDriver
-        chromedriver_autoinstaller.install()  # This will download and install the correct ChromeDriver version automatically
+        # Automatically install and set up ChromeDr # This will download and install the correct ChromeDriver version automatically
         
         # Set Chrome options (headless)
         options = Options()
@@ -52,9 +51,7 @@ def get_top_colleges(stream, city):
     colleges = []
 
     try:
-        # Automatically install and set up ChromeDriver
-        chromedriver_autoinstaller.install()  # This will download and install the correct ChromeDriver version automatically
-        
+        # Automatically install and set up ChromeDrive
         # Set Chrome options (headless)
         options = Options()
         options.add_argument('--headless')
