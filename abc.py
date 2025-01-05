@@ -13,21 +13,22 @@ def scrape_nirf_rankings(category):
     Returns:
         A pandas DataFrame containing the rankings data (rank, name, city, score).
     """
-    base_url = "https://www.nirfindia.org"
+    # Base URL and the category URL pattern
+    base_url = "https://www.nirfindia.org/Rankings/2024/"
     
     # URL based on the selected category
-    category_url = f"{base_url}/{category}.php"  # Adjust the URL structure based on the NIRF website
+    category_url = f"{base_url}{category}Ranking.html"
     response = requests.get(category_url)
     
     if response.status_code != 200:
-        st.error("Failed to fetch data")
+        st.error("Failed to fetch data. Please check the category.")
         return pd.DataFrame()
     
     soup = BeautifulSoup(response.content, "html.parser")
     
     # Find the ranking table (this needs to be customized based on the actual structure of the table)
     table = soup.find("table", {"class": "table table-bordered"})
-    
+
     if not table:
         st.error("Ranking table not found")
         return pd.DataFrame()
@@ -72,13 +73,15 @@ def main():
     # Ask the user to input the category
     category = st.selectbox(
         "Select the category you want to scrape:",
-        ["engineering", "management", "university", "law", "medical", "pharmacy", "architecture"]
+        ["Engineering", "Law", "Management", "University", "Medical", "Pharmacy", "Architecture"]
     )
 
     # Scrape the data for the selected category
     if st.button("Get Rankings"):
         if category:
-            df = scrape_nirf_rankings(category)
+            # Convert category to the appropriate format for the URL
+            category_url_name = category.capitalize()  # Ensuring the first letter is capitalized
+            df = scrape_nirf_rankings(category_url_name)
 
             if not df.empty:
                 st.write(f"Top NIRF Rankings for {category.capitalize()}:")
@@ -89,7 +92,7 @@ def main():
                 st.download_button(
                     label="Download CSV",
                     data=csv,
-                    file_name=f"nirf_{category}_rankings.csv",
+                    file_name=f"nirf_{category.lower()}_rankings.csv",
                     mime="text/csv"
                 )
             else:
