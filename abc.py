@@ -24,12 +24,12 @@ def get_top_colleges(stream):
     # Example XPath adjustments (adjust based on actual website structure)
     college_names = [
         element.text.strip() 
-        for element in soup.find_all("h3", class_="college_text_data")  # Adjust as needed
+        for element in soup.find_all("div", class_="SR_college_card_top_data")  # Adjust as needed
     ]
 
     city_names = [
         element.find("span", class_="city").text.strip() 
-        for element in soup.find_all("div", class_="college_text_data") 
+        for element in soup.find_all("div", class_="SR_college_card_top_data") 
     ]
 
     package_infos = [
