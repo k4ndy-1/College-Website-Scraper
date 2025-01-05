@@ -15,7 +15,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 # Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
     # Set up Selenium WebDriver (make sure the driver is in the PATH or specify the path)
-    driver_path = 'chromedriver'  # Replace this with the path to your ChromeDriver executable
+    driver_path = './chromedriver'  # Replace this with the path to your ChromeDriver executable
 
     # Setup Service for WebDriver
     service = Service(driver_path)
