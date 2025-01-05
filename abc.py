@@ -3,10 +3,9 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import streamlit as st
 
-
 def scrape_nirf_rankings(category):
     """
-    Scrapes NIRF India rankings for a specified category, skipping odd rows.
+    Scrapes NIRF India rankings for a specified category.
 
     Args:
         category: The category of the rankings (e.g., 'engineering', 'management', 'university').
@@ -16,8 +15,8 @@ def scrape_nirf_rankings(category):
     """
 
     # Base URL and the category URL pattern
-    base_url = "https://www.nirfindia.org/Rankings/2024/"
-    category_url = f"{base_url}{category}Ranking.html"
+    base_url = "https://www.nirfindia.org/Rankings/2024/" 
+    category_url = f"{base_url}{category}Ranking.html" 
 
     response = requests.get(category_url)
 
@@ -88,7 +87,6 @@ def main():
         ["Engineering", "Law", "Management", "University", "Medical", "Pharmacy", "Architecture"],
     )
 
-    # Scrape the data for the selected category
     if st.button("Get Rankings"):
         if category:
             # Convert category to the appropriate format for the URL
@@ -97,10 +95,13 @@ def main():
 
             if not df.empty:
                 st.write(f"Top NIRF Rankings for {category.capitalize()}:")
-                st.dataframe(df)  # Display the dataframe with raw data
+
+                # Skip odd rows before displaying
+                df_even_rows = df[df.index % 2 == 0] 
+                st.dataframe(df_even_rows) 
 
                 # Add the option to download the result as a CSV
-                csv = df.to_csv(index=False)
+                csv = df_even_rows.to_csv(index=False)  # Use df_even_rows for CSV download
                 st.download_button(
                     label="Download CSV",
                     data=csv,
@@ -111,7 +112,6 @@ def main():
                 st.write(f"No rankings found for {category.capitalize()}.")
         else:
             st.warning("Please select a category.")
-
 
 if __name__ == "__main__":
     main()
