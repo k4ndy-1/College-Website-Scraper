@@ -16,6 +16,13 @@ from bs4 import BeautifulSoup
 
 # ------------- Settings for Pages -----------
 st.set_page_config(layout="wide")
+options = webdriver.ChromeOptions()
+options.add_argument('--headless')
+options.add_argument('--disable-gpu')
+options.add_argument('--window-size=1920,1200')
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
+                          options=options)
+driver = webdriver.Chrome(service=service, options=options)
 
 
 # ---------------- Page & UI/UX Components ------------------------
@@ -23,13 +30,6 @@ st.set_page_config(layout="wide")
 def get_top_colleges(stream, city):
     driver=None
     try:
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
-        options.add_argument('--disable-gpu')
-        options.add_argument('--window-size=1920,1200')
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
-                                  options=options)
-        driver = webdriver.Chrome(service=service, options=options)
     
     # Modify the URL to include city (we're assuming a city filter can be added in the URL)
         url = f"https://www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
