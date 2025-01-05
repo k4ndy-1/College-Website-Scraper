@@ -1,7 +1,7 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
 import streamlit as st
+import pandas as pd
+from bs4 import BeautifulSoup
+import requests
 
 def scrape_nirf_rankings(category):
     """
@@ -15,8 +15,8 @@ def scrape_nirf_rankings(category):
     """
 
     # Base URL and the category URL pattern
-    base_url = "https://www.nirfindia.org/Rankings/2024/" 
-    category_url = f"{base_url}{category}Ranking.html" 
+    base_url = "https://www.nirfindia.org/Rankings/2024/"
+    category_url = f"{base_url}{category}Ranking.html"
 
     response = requests.get(category_url)
 
@@ -49,11 +49,14 @@ def scrape_nirf_rankings(category):
         if len(columns) > 1:
             # Extract raw data from the columns
             inid = columns[0].text.strip()
-            name = columns[1].text.strip()
-            city = columns[2].text.strip()
+            name = columns[1].text.strip() 
+            city = columns[2].text.strip() 
             state = columns[3].text.strip()
             rank = columns[4].text.strip()
-            score = columns[-1].text.strip()  # Assuming the last column contains the score
+            score = columns[-1].text.strip() 
+
+            # Remove unwanted text from score 
+            score = score.split("|")[0].strip()  # Split the score string and take the first part
 
             # Append raw data to lists
             ins_id.append(inid)
@@ -95,13 +98,10 @@ def main():
 
             if not df.empty:
                 st.write(f"Top NIRF Rankings for {category.capitalize()}:")
-
-                # Skip odd rows before displaying
-                df_even_rows = df[df.index % 2 == 0] 
-                st.dataframe(df_even_rows) 
+                st.dataframe(df)
 
                 # Add the option to download the result as a CSV
-                csv = df_even_rows.to_csv(index=False)  # Use df_even_rows for CSV download
+                csv = df.to_csv(index=False)
                 st.download_button(
                     label="Download CSV",
                     data=csv,
