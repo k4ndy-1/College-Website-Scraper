@@ -86,6 +86,7 @@ def get_top_colleges(stream, city):
 
     finally:
         if driver is not None: driver.quit()
+    return None
 
 # Streamlit App main function
 def main():
