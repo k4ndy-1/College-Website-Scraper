@@ -8,16 +8,15 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Setup headless mode for Chrome
 chrome_options = Options()
-chrome_options.add_argument("--headless")  # Ensures Chrome runs in headless mode
-chrome_options.add_argument("--no-sandbox")  # Recommended for running on cloud environments
+chrome_options.add_argument("--headless")  # Run Chrome in headless mode
+chrome_options.add_argument("--no-sandbox")  # Helps avoid issues in certain environments (e.g., Docker, Streamlit Cloud)
 chrome_options.add_argument("--disable-dev-shm-usage")  # Prevents crashes in Docker containers
 
-# Set path to the Chromedriver executable if needed or use webdriver-manager (recommended)
-from webdriver_manager.chrome import ChromeDriverManager
-
+# Use ChromeDriverManager to automatically download the correct version of chromedriver
 driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
 
