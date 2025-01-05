@@ -5,82 +5,85 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from bs4 import BeautifulSoup
+import time
 import pandas as pd
 
 # ------------- Settings for Pages -----------
 st.set_page_config(layout="wide")
 
-# Keep text only
+# Function to get website content
 def get_website_content(url):
     driver = None
     try:
-        # Using on Local
+        # Setup the driver
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--disable-gpu')
-        options.add_argument('--window-size=1920,1200')
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
-                                  options=options)
-        st.write(f"DEBUG:DRIVER:{driver}")
+        options.add_argument('--window-size=1920x1200')
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
         driver.get(url)
-        time.sleep(5)
+
+        # Wait until the page is fully loaded
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        
         html_doc = driver.page_source
-        driver.quit()
         soup = BeautifulSoup(html_doc, "html.parser")
         return soup.get_text()
+
     except Exception as e:
-        st.write(f"DEBUG:INIT_DRIVER:ERROR:{e}")
+        st.write(f"ERROR: {e}")
     finally:
-        if driver is not None: driver.quit()
+        if driver:
+            driver.quit()
     return None
 
-
-
-
-# ---------------- Page & UI/UX Components ------------------------
-def main_sidebar():
-    # 1.Vertical Menu
-    st.header("Running Selenium on Streamlit Cloud")
-    site_extraction_page()
-
+# Extract college details from the website
 def site_extraction_page():
     SAMPLE_URL = "https://www.collegedunia.com"
     url = st.text_input(label="URL", placeholder="https://example.com", value=SAMPLE_URL)
 
     clicked = st.button("Load Page Content",type="primary")
     if clicked:
-            # Scrape the college names, cities, entrance exams, and cutoff
-    colleges = []
-    
-    try:
-        # Use the XPath to find the college names
-        college_elements = driver.find_elements(By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")
+        colleges = []
         
-        # Scrape the city name using the updated XPath
-        city_elements = driver.find_elements(By.XPATH, "//span[@class='jsx-3230181281 pr-1 location']")
+        try:
+            # Scrape college data using Selenium
+            options = webdriver.ChromeOptions()
+            options.add_argument('--headless')
+            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            driver.get(url)
 
-        # Scrape the entrance exam name and cutoff using a new XPath
-        package_elements = driver.find_elements(By.XPATH, "//span[contains(text(), '₹')]")  # Adjust as needed
-        
-        for i in range(len(college_elements)):
-            college_name = college_elements[i].text.strip()
-            city_name = city_elements[i].text.strip() if i < len(city_elements) else "N/A"  # Default to "N/A" if city is missing
-            entrance_exam_info = package_elements[i].text.strip() if i < len(package_elements) else "N/A"  # Default to "N/A" if entrance exam info is missing
+            # Wait for the page to load
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, "body"))
+            )
 
-            if college_name:  # Avoid adding empty names
-                colleges.append((college_name, city_name, entrance_exam_info))
+            # Use the XPath to find the required elements
+            college_elements = driver.find_elements(By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")
+            city_elements = driver.find_elements(By.XPATH, "//span[@class='jsx-3230181281 pr-1 location']")
+            package_elements = driver.find_elements(By.XPATH, "//span[contains(text(), '₹')]")
 
-        # Return the list of colleges, cities, and entrance exams
-        return colleges
+            # Process the data
+            for i in range(len(college_elements)):
+                college_name = college_elements[i].text.strip()
+                city_name = city_elements[i].text.strip() if i < len(city_elements) else "N/A"
+                entrance_exam_info = package_elements[i].text.strip() if i < len(package_elements) else "N/A"
+                
+                if college_name:  # Avoid empty names
+                    colleges.append((college_name, city_name, entrance_exam_info))
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return []
-
-    finally:
-        # Close the WebDriver session
-        driver.quit()
-
+            driver.quit()
+            return colleges
+        except Exception as e:
+            st.write(f"An error occurred: {e}")
+            return []
+        finally:
+            if driver:
+                driver.quit()
 
 # Streamlit App main function
 def main():
@@ -100,7 +103,7 @@ def main():
             if colleges:
                 # Convert the list of tuples into a DataFrame
                 df = pd.DataFrame(colleges, columns=["College Name", "City", "Package"])
-                
+
                 # Display the results in a table
                 st.write(f"Top Colleges for {stream} in {city}:")
                 st.dataframe(df)
