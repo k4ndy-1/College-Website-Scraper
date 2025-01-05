@@ -41,20 +41,26 @@ def get_website_content(url):
 # Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
     driver=None
+    try:
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--window-size=1920,1200')
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
+                                  options=options)
+        driver = webdriver.Chrome(service=service, options=options)
     
     # Modify the URL to include city (we're assuming a city filter can be added in the URL)
-    url = f"https://www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
+        url = f"https://www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
     
     # Open the page
-    driver.get(url)
+        driver.get(url)
 
     # Wait for the page to load (use explicit wait)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")))
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")))
 
     # Scrape the college names, cities, entrance exams, and cutoff
-    colleges = []
-    
-    try:
+        colleges = []
         # Use the XPath to find the college names
         college_elements = driver.find_elements(By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")
         
