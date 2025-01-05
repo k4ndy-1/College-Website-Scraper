@@ -83,10 +83,6 @@ def scrape_nirf_rankings(category):
             rank = clean_text(columns[4].text.strip())
             score = clean_text(columns[-1].text.strip())  # Assuming the last column contains the score
 
-            # Check if city and state are not empty after cleaning
-            if not city or not state:
-                continue  # Skip the row if city or state is missing
-
             # Append cleaned data to lists
             ins_id.append(inid)
             names.append(name)
