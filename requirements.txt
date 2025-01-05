@@ -1,4 +1,5 @@
 webdriver-manager==4.0.2
+seleniumbase
 chromedriver-autoinstaller
 aiohttp==3.9.5
 aiosignal==1.3.1
