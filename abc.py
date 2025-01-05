@@ -47,30 +47,30 @@ def scrape_nirf_rankings(category):
     for row in rows:
         columns = row.find_all("td")
         
-        # Log the skipped row contents for debugging
-        if len(columns) != 6:
-            st.warning(f"Skipping row with insufficient columns: {row.text.strip()}")
-            continue  # Skip rows with invalid number of columns
-        
-        try:
-            # Extracting each column based on the expected structure
-            institute_id = columns[0].text.strip()   # Institute ID
-            name = columns[1].text.strip()            # Name
-            city = columns[2].text.strip()            # City
-            state = columns[3].text.strip()           # State
-            score = columns[4].text.strip()           # Score
-            rank = columns[5].text.strip()            # Rank
+        # Ensure that the row has enough columns to extract the data
+        if len(columns) == 6:  # We expect exactly 6 columns (Institute ID, Name, City, State, Score, Rank)
+            try:
+                # Extracting each column based on the expected structure
+                institute_id = columns[0].text.strip()   # Institute ID
+                name = columns[1].text.strip()            # Name
+                city = columns[2].text.strip()            # City
+                state = columns[3].text.strip()           # State
+                score = columns[4].text.strip()           # Score
+                rank = columns[5].text.strip()            # Rank
 
-            # Append to lists
-            institute_ids.append(institute_id)
-            names.append(name)
-            cities.append(city)
-            states.append(state)
-            scores.append(score)
-            ranks.append(rank)
-        except IndexError:
-            st.warning("Error processing a row in the table. Skipping this row.")
-            continue  # Skip the current row if an IndexError occurs
+                # Append to lists
+                institute_ids.append(institute_id)
+                names.append(name)
+                cities.append(city)
+                states.append(state)
+                scores.append(score)
+                ranks.append(rank)
+            except IndexError:
+                st.warning("Error processing a row in the table. Skipping this row.")
+                continue  # Skip the current row if an IndexError occurs
+        else:
+            # Skipping rows that don't have exactly 6 columns
+            st.warning("Skipping malformed row (not enough columns).")
 
     # Create a DataFrame
     data = {
