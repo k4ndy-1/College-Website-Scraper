@@ -109,4 +109,4 @@ def main():
             st.warning("Please select a category.")
 
 if __name__ == "__main__":
-    main() name column is not defined
+    main()
