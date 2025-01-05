@@ -50,8 +50,8 @@ def scrape_nirf_rankings(category):
             inid = columns[0].text.strip()
             name = columns[1].text.strip()
             city = columns[2].text.strip()
-            state=column[3].text.strip()
-            rank=column[4].text.strip()
+            state=columns[3].text.strip()
+            rank=columns[4].text.strip()
             score = columns[-1].text.strip()  # Assuming the last column contains the score
             
             ins_id.append(inid)
