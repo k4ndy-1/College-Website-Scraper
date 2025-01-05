@@ -7,31 +7,49 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 
-# Function to get top colleges based on stream and city
-def get_top_colleges(stream, city):
-    # Set up Selenium WebDriver (make sure the driver is in the PATH or specify the path)
-    driver_path = './chromedriver.exe'  # Replace this with the path to your ChromeDriver executable
+# ------------- Settings for Pages -----------
+st.set_page_config(layout="wide")
 
-    # Setup Service for WebDriver
-    service = Service(driver_path)
-    
-    # Optionally, set some options for the browser (headless mode, etc.)
-    options = Options()
-    options.headless = False  # Set to True if you want to run the browser in headless mode (without GUI)
+# Keep text only
+def get_website_content(url):
+    driver = None
+    try:
+        # Using on Local
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--window-size=1920,1200')
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
+                                  options=options)
+        st.write(f"DEBUG:DRIVER:{driver}")
+        driver.get(url)
+        time.sleep(5)
+        html_doc = driver.page_source
+        driver.quit()
+        soup = BeautifulSoup(html_doc, "html.parser")
+        return soup.get_text()
+    except Exception as e:
+        st.write(f"DEBUG:INIT_DRIVER:ERROR:{e}")
+    finally:
+        if driver is not None: driver.quit()
+    return None
 
-    # Launch Chrome with the specified Service and Options
-    driver = webdriver.Chrome(service=service, options=options)
-    
-    # Modify the URL to include city (we're assuming a city filter can be added in the URL)
-    url = f"https://www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
-    
-    # Open the page
-    driver.get(url)
 
-    # Wait for the page to load (use explicit wait)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")))
 
-    # Scrape the college names, cities, entrance exams, and cutoff
+
+# ---------------- Page & UI/UX Components ------------------------
+def main_sidebar():
+    # 1.Vertical Menu
+    st.header("Running Selenium on Streamlit Cloud")
+    site_extraction_page()
+
+def site_extraction_page():
+    SAMPLE_URL = "https://www.collegedunia.com"
+    url = st.text_input(label="URL", placeholder="https://example.com", value=SAMPLE_URL)
+
+    clicked = st.button("Load Page Content",type="primary")
+    if clicked:
+            # Scrape the college names, cities, entrance exams, and cutoff
     colleges = []
     
     try:
@@ -62,6 +80,7 @@ def get_top_colleges(stream, city):
     finally:
         # Close the WebDriver session
         driver.quit()
+
 
 # Streamlit App main function
 def main():
