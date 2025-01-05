@@ -58,4 +58,29 @@ def get_top_colleges(stream, city):
 def main():
     st.title("Top Colleges Finder")
 
-    stream = st.text_input("Enter the s
+    stream = st.text_input("Enter the stream (e.g., MBBS, Engineering, Law):").strip().lower()
+    city = st.text_input("Enter the city (e.g., Delhi, Bangalore, Mumbai):").strip().lower()
+
+    if st.button("Get Top Colleges"):
+        if stream and city:
+            colleges = get_top_colleges(stream, city)
+
+            if colleges:
+                df = pd.DataFrame(colleges, columns=["College Name", "City", "Package"])
+                st.write(f"Top Colleges for {stream} in {city}:")
+                st.dataframe(df)
+
+                csv = df.to_csv(index=False)
+                st.download_button(
+                    label="Download CSV",
+                    data=csv,
+                    file_name=f"top_{stream}_{city}_colleges.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.write(f"No colleges found for {stream} in {city}. Please try again later.")
+        else:
+            st.warning("Please enter both stream and city.")
+
+if __name__ == "__main__":
+    main()
