@@ -25,7 +25,7 @@ def get_top_colleges(stream, city):
     driver_path="package.txt"
 
     # Setup Service for WebDriver
-    service = Service(driver_path)
+    service = Service(get_driver)
     
     # Optionally, set some options for the browser (headless mode, etc.)
     options = Options()
