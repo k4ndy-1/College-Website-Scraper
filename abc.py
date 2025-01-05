@@ -6,6 +6,20 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+# Setup headless mode for Chrome
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Ensures Chrome runs in headless mode
+chrome_options.add_argument("--no-sandbox")  # Recommended for running on cloud environments
+chrome_options.add_argument("--disable-dev-shm-usage")  # Prevents crashes in Docker containers
+
+# Set path to the Chromedriver executable if needed or use webdriver-manager (recommended)
+from webdriver_manager.chrome import ChromeDriverManager
+
+driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+
 
 
 # Function to get top colleges based on stream and city
