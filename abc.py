@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 st.set_page_config(layout="wide")
 
 # Keep text only
-def get_website_content(url):
+def get_top_colleges(url):
     driver = None
     options = Options()
     options.headless = False  # Set to True if you want to run the browser in headless mode (without GUI)
