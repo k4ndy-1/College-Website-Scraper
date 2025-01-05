@@ -15,22 +15,23 @@ def get_top_colleges(stream):
     or an empty DataFrame if no data is found.
   """
   try:
-    url = f"https://www.collegesearch.in/{stream}"  # Adjust URL as needed
+    url = f"https://www.collegesearch.in/{stream}/colleges" 
     response = requests.get(url)
     response.raise_for_status()  # Raise an exception for bad status codes
 
     soup = BeautifulSoup(response.content, "html.parser")
 
+    # Example XPath adjustments (adjust based on actual website structure)
     college_names = [
         element.text.strip() 
-        for element in soup.find_all("h3", class_="college-name") 
+        for element in soup.find_all("h3", class_="college-name")  # Adjust as needed
     ]
-    
+
     city_names = [
         element.find("span", class_="city").text.strip() 
         for element in soup.find_all("div", class_="college-card") 
     ]
-    
+
     package_infos = [
         element.find("span", class_="average-package").text.strip() 
         for element in soup.find_all("div", class_="college-details") 
