@@ -1,51 +1,33 @@
-import streamlit as st
-import pandas as pd
-from bs4 import BeautifulSoup
-import requests
-
 def get_top_colleges(stream):
-  """
-  Fetches top colleges from Collegesearch.in using BeautifulSoup.
-
-  Args:
-    stream: The desired academic stream (e.g., "engineering", "mbbs").
-
-  Returns:
-    A pandas DataFrame containing college names, cities, and package information,
-    or an empty DataFrame if no data is found.
-  """
   try:
-    url = f"https://www.collegesearch.in/{stream}" 
+    url = f"https://www.collegesearch.in/{stream}"
     response = requests.get(url)
-    response.raise_for_status()  # Raise an exception for bad status codes
+    response.raise_for_status()
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Example XPath adjustments (adjust based on actual website structure)
+    # Update with actual correct class names or tags
     college_names = [
         element.text.strip() 
-        for element in soup.find_all("div", class_="SR_college_card_top_data")  # Adjust as needed
+        for element in soup.find_all("div", class_="college_text_data")  # Correct class or tag
     ]
 
     city_names = [
-        element.find("span", class_="city").text.strip() 
-        for element in soup.find_all("div", class_="SR_college_card_top_data") 
+        element.text.strip() 
+        for element in soup.find_all("span", class_="college_text_data")  # Correct class or tag
     ]
 
     package_infos = [
-        element.find("span", class_="average-package").text.strip() 
-        for element in soup.find_all("div", class_="SR_college_card_bottom_data") 
+        element.text.strip() 
+        for element in soup.find_all("span", class_="SR_college_card_bottom_data")  # Correct class or tag
     ]
 
-    # Find the minimum length of the lists to avoid errors
+    # Trim lists to minimum length
     min_length = min(len(college_names), len(city_names), len(package_infos))
-
-    # Trim lists to the minimum length
     college_names = college_names[:min_length]
     city_names = city_names[:min_length]
     package_infos = package_infos[:min_length]
 
-    # Create a DataFrame
     data = {
         "College Name": college_names,
         "City": city_names,
@@ -62,32 +44,3 @@ def get_top_colleges(stream):
   except Exception as e:
     st.error(f"An error occurred: {e}")
     return pd.DataFrame()
-
-# Streamlit App main function
-def main():
-  st.title("Top Colleges Finder")
-
-  stream = st.text_input("Enter the stream (e.g., engineering, mbbs):").strip().lower()
-
-  if st.button("Get Top Colleges"):
-    if stream:
-      df = get_top_colleges(stream)
-
-      if not df.empty:
-        st.write(f"Top Colleges for {stream}:")
-        st.dataframe(df)
-
-        csv = df.to_csv(index=False)
-        st.download_button(
-            label="Download CSV",
-            data=csv,
-            file_name=f"top_{stream}_colleges.csv",
-            mime="text/csv"
-        )
-      else:
-        st.write(f"No colleges found for {stream}.")
-    else:
-      st.warning("Please enter the stream.")
-
-if __name__ == "__main__":
-  main()
