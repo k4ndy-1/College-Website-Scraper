@@ -1,7 +1,34 @@
-import streamlit as st
-import pandas as pd
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import streamlit as st
+import re
+
+def clean_text(row_text):
+    """
+    Cleans unwanted patterns from the text, such as 'TLR (100)', 'RPC (100)', etc.
+    
+    Args:
+        row_text: The raw text from a table row.
+        
+    Returns:
+        Cleaned text.
+    """
+    # Remove unwanted patterns using regular expressions
+    unwanted_patterns = [
+        r"TLR \(.*?\)",  # Matches 'TLR (100)' and similar patterns
+        r"RPC \(.*?\)",  # Matches 'RPC (100)' and similar patterns
+        r"GO \(.*?\)",   # Matches 'GO (100)' and similar patterns
+        r"OI \(.*?\)",   # Matches 'OI (100)' and similar patterns
+        r"PERCEPTION \(.*?\)", # Matches 'PERCEPTION (100)' and similar patterns
+        r"\|",           # Matches the pipe character '|'
+        r"\s{2,}" # Matches any decimal number like '80.01', '95.79', etc.
+    ]
+    
+    for pattern in unwanted_patterns:
+        row_text = re.sub(pattern, "", row_text)
+
+    return row_text.strip()
 
 def scrape_nirf_rankings(category):
     """
@@ -15,8 +42,8 @@ def scrape_nirf_rankings(category):
     """
 
     # Base URL and the category URL pattern
-    base_url = "https://www.nirfindia.org/Rankings/2024/"
-    category_url = f"{base_url}{category}Ranking.html"
+    base_url = "https://www.nirfindia.org/Rankings/2024/" 
+    category_url = f"{base_url}{category}Ranking.html" 
 
     response = requests.get(category_url)
 
@@ -33,9 +60,9 @@ def scrape_nirf_rankings(category):
         st.error("Ranking table not found")
         return pd.DataFrame()
 
-    # Parse the table rows, skipping odd rows
-    rows = table.find_all("tr")[1::2]  # Skip header row and all odd rows
-
+    # Parse the table rows
+    rows = table.find_all("tr")[1:]  # Skip header row
+    
     # Extracting the required details
     ins_id = []
     ranks = []
@@ -47,18 +74,15 @@ def scrape_nirf_rankings(category):
     for row in rows:
         columns = row.find_all("td")
         if len(columns) > 1:
-            # Extract raw data from the columns
-            inid = columns[0].text.strip()
-            name = columns[1].text.strip() 
-            city = columns[2].text.strip() 
-            state = columns[3].text.strip()
-            rank = columns[4].text.strip()
-            score = columns[-1].text.strip() 
+            # Extract raw data from the columns and clean it
+            inid = clean_text(columns[0].text.strip())
+            name = clean_text(columns[1].text.strip())
+            city = clean_text(columns[2].text.strip())
+            state = clean_text(columns[3].text.strip())
+            rank = clean_text(columns[4].text.strip())
+            score = clean_text(columns[-1].text.strip())  # Assuming the last column contains the score
 
-            # Remove unwanted text from score 
-            score = score.split("|")[0].strip()  # Split the score string and take the first part
-
-            # Append raw data to lists
+            # Append cleaned data to lists
             ins_id.append(inid)
             names.append(name)
             cities.append(city)
@@ -98,6 +122,8 @@ def main():
 
             if not df.empty:
                 st.write(f"Top NIRF Rankings for {category.capitalize()}:")
+
+                # Show all rows without skipping
                 st.dataframe(df)
 
                 # Add the option to download the result as a CSV
