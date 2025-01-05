@@ -2,31 +2,18 @@ import streamlit as st
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
-import urllib.robotparser
 
 def get_top_colleges(stream, city):
   """
-  Fetches top colleges from Collegedunia using BeautifulSoup (if allowed).
+  Fetches top colleges from Collegedunia using BeautifulSoup.
 
   Args:
     stream: The desired academic stream (e.g., "engineering", "mbbs").
     city: The desired city (e.g., "delhi", "bangalore").
 
   Returns:
-    A pandas DataFrame containing college names, cities, and package information,
-    or an empty DataFrame if scraping is not allowed.
+    A pandas DataFrame containing college names, cities, and package information.
   """
-  user_agent = st.secrets["user_agent"]  # Assuming you have a user-agent set in Streamlit Secrets
-
-  # Check robots.txt for scraping allowance
-  robots_parser = urllib.robotparser.RobotFileParser()
-  robots_parser.set_url(f"https://collegedunia.com/robots.txt")
-  robots_parser.read()
-
-  if not robots_parser.can_fetch(user_agent, f"https://www.collegedunia.com/{stream}/{city}-colleges"):
-    st.error("Web scraping is not allowed according to Collegedunia's robots.txt. Please consider using their API or collecting data manually.")
-    return pd.DataFrame()
-
   try:
     url = f"https://www.collegedunia.com/{stream}/{city}-colleges"
     response = requests.get(url)
