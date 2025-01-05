@@ -33,8 +33,7 @@ def get_top_colleges(stream,city):
         options = Options()
         options.headless = False  # Set to True if you want to run the browser in headless mode (without GUI)
 
-        # Launch Chrome with the specified Service and Options
-        driver = webdriver.Chrome(service=service, options=options)
+       
         
         # Modify the URL to include city (we're assuming a city filter can be added in the URL)
         url = f"https://www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
