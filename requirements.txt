@@ -3,3 +3,5 @@ selenium
 chromedriver-autoinstaller
 pandas
 webdriver_manager
+BeautifulSoup  
+requests
