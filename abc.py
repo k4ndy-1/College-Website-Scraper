@@ -58,4 +58,40 @@ def get_top_colleges(stream, city):
 
     return df
 
-  except requests.exceptions.RequestException as
+  except requests.exceptions.RequestException as e:
+    st.error(f"Error fetching data: {e}")
+    return pd.DataFrame()
+
+  except Exception as e:
+    st.error(f"An error occurred: {e}")
+    return pd.DataFrame()
+
+# Streamlit App main function
+def main():
+  st.title("Top Colleges Finder")
+
+  stream = st.text_input("Enter the stream (e.g., engineering, mbbs):").strip().lower()
+  city = st.text_input("Enter the city (e.g., delhi, bangalore):").strip().lower()
+
+  if st.button("Get Top Colleges"):
+    if stream and city:
+      df = get_top_colleges(stream, city)
+
+      if not df.empty:
+        st.write(f"Top Colleges for {stream} in {city}:")
+        st.dataframe(df)
+
+        csv = df.to_csv(index=False)
+        st.download_button(
+            label="Download CSV",
+            data=csv,
+            file_name=f"top_{stream}_{city}_colleges.csv",
+            mime="text/csv"
+        )
+      else:
+        st.write(f"No colleges found for {stream} in {city}. Please try again later.")
+    else:
+      st.warning("Please enter both stream and city.")
+
+if __name__ == "__main__":
+  main()
