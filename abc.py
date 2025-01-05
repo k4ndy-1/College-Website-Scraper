@@ -2,37 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import streamlit as st
-import re
-
-def clean_row_data(row_text):
-    """
-    Cleans the row text by removing unwanted details like 'More DetailsClose', 'TLR', 'RPC', etc.
-    
-    Args:
-        row_text: The raw text from a table row.
-        
-    Returns:
-        Cleaned text.
-    """
-    # Remove unwanted patterns using regular expressions
-    unwanted_patterns = [
-        r"More Details.*",  # Matches 'More Details' and everything after
-        r"TLR \(.*?\)",      # Matches 'TLR (100)' and similar patterns
-        r"RPC \(.*?\)",      # Matches 'RPC (100)' and similar patterns
-        r"GO \(.*?\)",       # Matches 'GO (100)' and similar patterns
-        r"OI \(.*?\)",       # Matches 'OI (100)' and similar patterns
-        r"PERCEPTION \(.*?\)", # Matches 'PERCEPTION (100)' and similar patterns
-        r"\|",              # Matches '|' symbol
-        r"\s{2,}",           # Matches multiple spaces and replaces with a single space
-    ]
-    
-    for pattern in unwanted_patterns:
-        row_text = re.sub(pattern, "", row_text)
-
-    # Remove any unnecessary numbers that are not part of the rank/score
-    row_text = re.sub(r"(?<!\w)(\d+\.\d{2})(?!\w)", "", row_text)  # Only remove numbers like 95.79
-    
-    return row_text.strip()
 
 def scrape_nirf_rankings(category):
     """
@@ -75,21 +44,18 @@ def scrape_nirf_rankings(category):
     scores = []
     states = []
     
-    for index, row in enumerate(rows):
-        # Skip odd-numbered rows (odd index)
-        if index % 2 != 0:
-            continue
-
+    for row in rows:
         columns = row.find_all("td")
         if len(columns) > 1:
-            inid = clean_row_data(columns[0].text.strip())
-            name = clean_row_data(columns[1].text.strip())
-            city = clean_row_data(columns[2].text.strip())
-            state = clean_row_data(columns[3].text.strip())
-            rank = clean_row_data(columns[4].text.strip())
-            score = clean_row_data(columns[-1].text.strip())  # Assuming the last column contains the score
+            # Extract raw data from the columns
+            inid = columns[0].text.strip()
+            name = columns[1].text.strip()
+            city = columns[2].text.strip()
+            state = columns[3].text.strip()
+            rank = columns[4].text.strip()
+            score = columns[-1].text.strip()  # Assuming the last column contains the score
             
-            # Append cleaned data to lists
+            # Append raw data to lists
             ins_id.append(inid)
             names.append(name)
             cities.append(city)
@@ -129,7 +95,7 @@ def main():
 
             if not df.empty:
                 st.write(f"Top NIRF Rankings for {category.capitalize()}:")
-                st.dataframe(df)
+                st.dataframe(df)  # Display the dataframe with raw data
 
                 # Add the option to download the result as a CSV
                 csv = df.to_csv(index=False)
