@@ -40,7 +40,6 @@ def get_website_content(url):
 # ---------------- Page & UI/UX Components ------------------------
 # Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
-    driver=None
     try:
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
