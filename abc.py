@@ -21,8 +21,6 @@ def get_driver():
 
 # Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
-    # Set up Selenium WebDriver (make sure the driver is in the PATH or specify the path)  
-    driver_path="package.txt"
 
     # Setup Service for WebDriver
     service = Service(get_driver)
