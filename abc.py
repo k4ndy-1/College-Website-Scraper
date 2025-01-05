@@ -1,106 +1,105 @@
-import time
 import streamlit as st
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-import chromedriver_autoinstaller  # Automatic driver installer
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
+import pandas as pd
 
-# ------------- Settings for Pages -----------
-st.set_page_config(layout="wide")
+# Function to get top colleges based on stream and city
+def get_top_colleges(stream, city):
+    # Set up Selenium WebDriver (make sure the driver is in the PATH or specify the path)
+    driver_path = './chromedriver.exe'  # Replace this with the path to your ChromeDriver executable
 
-# Function to get website content
-def get_website_content(url):
-    driver = None
-    content = None
+    # Setup Service for WebDriver
+    service = Service(driver_path)
+    
+    # Optionally, set some options for the browser (headless mode, etc.)
+    options = Options()
+    options.headless = False  # Set to True if you want to run the browser in headless mode (without GUI)
+
+    # Launch Chrome with the specified Service and Options
+    driver = webdriver.Chrome(service=service, options=options)
+    
+    # Modify the URL to include city (we're assuming a city filter can be added in the URL)
+    url = f"https://www.collegedunia.com/{stream}/{city}-colleges"  # Update the URL format if needed
+    
+    # Open the page
+    driver.get(url)
+
+    # Wait for the page to load (use explicit wait)
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")))
+
+    # Scrape the college names, cities, entrance exams, and cutoff
+    colleges = []
     
     try:
-        # Automatically install and set up ChromeDr # This will download and install the correct ChromeDriver version automatically
-        
-        # Set Chrome options (headless)
-        options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--disable-gpu')
-        options.add_argument('--window-size=1920,1200')
-        
-        # Setup the WebDriver
-        driver = webdriver.Chrome(options=options)
-
-        # Fetch the webpage
-        driver.get(url)
-        time.sleep(5)  # Ensure the page loads
-        
-        # Get the page HTML and parse it with BeautifulSoup
-        html_doc = driver.page_source
-        content = BeautifulSoup(html_doc, 'html.parser')
-        
-    except Exception as e:
-        st.write(f"DEBUG: ERROR: {e}")
-    finally:
-        if driver is not None:
-            driver.quit()
-
-    return content
-
-# Function to scrape top colleges based on stream and city
-def get_top_colleges(stream, city):
-    driver = None
-    colleges = []
-
-    try:
-        # Automatically install and set up ChromeDrive
-        # Set Chrome options (headless)
-        options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--disable-gpu')
-        options.add_argument('--window-size=1920,1200')
-
-        # Setup the WebDriver
-        driver = webdriver.Chrome(options=options)
-
-        # Modify the URL to include city and stream
-        url = f"https://www.collegedunia.com/{stream}/{city}-colleges"
-        driver.get(url)
-
-        # Wait for the page to load completely
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")))
-
-        # Scrape college names, cities, entrance exams, and cutoffs
+        # Use the XPath to find the college names
         college_elements = driver.find_elements(By.XPATH, "//a[@class='jsx-3230181281 college_name underline-on-hover']/h3")
+        
+        # Scrape the city name using the updated XPath
         city_elements = driver.find_elements(By.XPATH, "//span[@class='jsx-3230181281 pr-1 location']")
-        package_elements = driver.find_elements(By.XPATH, "//span[contains(text(), '₹')]")
 
+        # Scrape the entrance exam name and cutoff using a new XPath
+        package_elements = driver.find_elements(By.XPATH, "//span[contains(text(), '₹')]")  # Adjust as needed
+        
         for i in range(len(college_elements)):
             college_name = college_elements[i].text.strip()
-            city_name = city_elements[i].text.strip() if i < len(city_elements) else "N/A"
-            entrance_exam_info = package_elements[i].text.strip() if i < len(package_elements) else "N/A"
+            city_name = city_elements[i].text.strip() if i < len(city_elements) else "N/A"  # Default to "N/A" if city is missing
+            entrance_exam_info = package_elements[i].text.strip() if i < len(package_elements) else "N/A"  # Default to "N/A" if entrance exam info is missing
 
-            if college_name:
+            if college_name:  # Avoid adding empty names
                 colleges.append((college_name, city_name, entrance_exam_info))
 
+        # Return the list of colleges, cities, and entrance exams
         return colleges
 
     except Exception as e:
-        st.write(f"An error occurred: {e}")
+        print(f"An error occurred: {e}")
         return []
 
     finally:
-        if driver is not None:
-            driver.quit()
+        # Close the WebDriver session
+        driver.quit()
 
-# Example usage in Streamlit
+# Streamlit App main function
+def main():
+    # Set up the Streamlit interface
+    st.title("Top Colleges Finder")
+
+    # Ask the user for the stream and city they are interested in
+    stream = st.text_input("Enter the stream (e.g., MBBS, Engineering, Law):").strip().lower()
+    city = st.text_input("Enter the city (e.g., Delhi, Bangalore, Mumbai):").strip().lower()
+
+    # Check if the user has provided input
+    if st.button("Get Top Colleges"):
+        if stream and city:
+            # Get the top colleges for the stream and city
+            colleges = get_top_colleges(stream, city)
+
+            if colleges:
+                # Convert the list of tuples into a DataFrame
+                df = pd.DataFrame(colleges, columns=["College Name", "City", "Package"])
+                
+                # Display the results in a table
+                st.write(f"Top Colleges for {stream} in {city}:")
+                st.dataframe(df)
+
+                # Provide download option
+                csv = df.to_csv(index=False)
+                st.download_button(
+                    label="Download CSV",
+                    data=csv,
+                    file_name=f"top_{stream}_{city}_colleges.csv",
+                    mime="text/csv"
+                )
+
+            else:
+                st.write(f"No colleges found for {stream} in {city}. Please try again later.")
+        else:
+            st.warning("Please enter both stream and city.")
+
+# Run the Streamlit app
 if __name__ == "__main__":
-    # Get user input for stream and city (or set default values for testing)
-    stream = "engineering"  # You can modify this to get dynamic input from Streamlit UI
-    city = "delhi"  # Modify this similarly to get dynamic input
-
-    # Scrape top colleges
-    colleges = get_top_colleges(stream, city)
-
-    # Display the scraped college data in Streamlit
-    st.write(f"Top Colleges for {stream} in {city}:")
-    for college in colleges:
-        st.write(f"College: {college[0]}, City: {college[1]}, Entrance Exam: {college[2]}")
+    main()
