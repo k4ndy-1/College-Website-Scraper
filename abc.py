@@ -3,42 +3,36 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 
-def get_top_colleges(stream, city, course):
+def get_top_colleges(stream, city):
   """
   Fetches top colleges from Collegesearch.in using BeautifulSoup.
 
   Args:
     stream: The desired academic stream (e.g., "engineering", "mbbs").
     city: The desired city (e.g., "delhi", "bangalore").
-    course: The desired course (e.g., "Computer Science", "Mechanical Engineering").
 
   Returns:
-    A pandas DataFrame containing college names, cities, and package information.
+    A pandas DataFrame containing college names, cities, and package information,
+    or an empty DataFrame if no data is found.
   """
   try:
-    url = f"https://www.collegesearch.in/{stream}/{city}-colleges?course={course}"
+    url = f"https://www.collegesearch.in/{stream}/colleges-{city}"
     response = requests.get(url)
     response.raise_for_status()  # Raise an exception for bad status codes
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Extract college names
+    # Extract college names (adjust XPath as needed)
     college_names = [
-        element.text.strip() 
-        for element in soup.find_all("a", class_="jsx-3230181281 college_name underline-on-hover")
+        element.text.strip() for element in soup.find_all("a", class_="jsx-3230181281 college_name underline-on-hover")
     ]
 
-    # Extract city names (adjust XPath as needed)
-    city_names = [
-        element.text.strip() 
-        for element in soup.find_all("span", class_="jsx-3230181281 pr-1 location")
-    ]
+    # Extract city names (assuming city is already provided)
+    city_names = [city] * len(college_names)  # Assuming same city for all colleges
 
     # Extract package information (adjust XPath as needed)
     package_infos = [
-        element.text.strip() 
-        for element in soup.find_all("span", text=True) 
-        if "₹" in element.text
+        element.text.strip() for element in soup.find_all("span", text=True) if "₹" in element.text
     ]
 
     # Find the minimum length of the lists to avoid errors
@@ -73,27 +67,26 @@ def main():
 
   stream = st.text_input("Enter the stream (e.g., engineering, mbbs):").strip().lower()
   city = st.text_input("Enter the city (e.g., delhi, bangalore):").strip().lower()
-  course = st.text_input("Enter the course (e.g., Computer Science, Mechanical Engineering):").strip().lower()
 
   if st.button("Get Top Colleges"):
-    if stream and city and course:
-      df = get_top_colleges(stream, city, course)
+    if stream and city:
+      df = get_top_colleges(stream, city)
 
       if not df.empty:
-        st.write(f"Top Colleges for {stream} in {city} offering {course}:")
+        st.write(f"Top Colleges for {stream} in {city}:")
         st.dataframe(df)
 
         csv = df.to_csv(index=False)
         st.download_button(
             label="Download CSV",
             data=csv,
-            file_name=f"top_{stream}_{city}_{course}_colleges.csv",
+            file_name=f"top_{stream}_{city}_colleges.csv",
             mime="text/csv"
         )
       else:
-        st.write(f"No colleges found for {stream} in {city} offering {course}. Please try again later.")
+        st.write(f"No colleges found for {stream} in {city}.")
     else:
-      st.warning("Please enter all fields: stream, city, and course.")
+      st.warning("Please enter both stream and city.")
 
 if __name__ == "__main__":
   main()
