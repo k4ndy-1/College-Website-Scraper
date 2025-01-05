@@ -6,15 +6,17 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
+import streamlit as st
+
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+import time
+from bs4 import BeautifulSoup
 
 # ------------- Settings for Pages -----------
 st.set_page_config(layout="wide")
-options = webdriver.ChromeOptions()
-options.add_argument('--headless')
-options.add_argument('--disable-gpu')
-options.add_argument('--window-size=1920,1200')
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),
-                          options=options)
+
 
 # ---------------- Page & UI/UX Components ------------------------
 # Function to get top colleges based on stream and city
