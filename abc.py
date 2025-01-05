@@ -1,21 +1,23 @@
 import time
-import pandas as pd
-import streamlit as st
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+import streamlit as st
+import pandas as pd
 
 # Function to get top colleges based on stream and city
 def get_top_colleges(stream, city):
     options = Options()
-    options.headless = True  # Running in headless mode for cloud deployment
+    options.headless = True  # Running in headless mode
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-
+    options.add_argument('--disable-gpu')  # Disable GPU usage in headless mode
+    options.add_argument('--remote-debugging-port=9222')  # This option is often needed to avoid errors in headless mode
+    
     # Setup ChromeDriver with options
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
@@ -56,29 +58,4 @@ def get_top_colleges(stream, city):
 def main():
     st.title("Top Colleges Finder")
 
-    stream = st.text_input("Enter the stream (e.g., MBBS, Engineering, Law):").strip().lower()
-    city = st.text_input("Enter the city (e.g., Delhi, Bangalore, Mumbai):").strip().lower()
-
-    if st.button("Get Top Colleges"):
-        if stream and city:
-            colleges = get_top_colleges(stream, city)
-
-            if colleges:
-                df = pd.DataFrame(colleges, columns=["College Name", "City", "Package"])
-                st.write(f"Top Colleges for {stream} in {city}:")
-                st.dataframe(df)
-
-                csv = df.to_csv(index=False)
-                st.download_button(
-                    label="Download CSV",
-                    data=csv,
-                    file_name=f"top_{stream}_{city}_colleges.csv",
-                    mime="text/csv"
-                )
-            else:
-                st.write(f"No colleges found for {stream} in {city}. Please try again later.")
-        else:
-            st.warning("Please enter both stream and city.")
-
-if __name__ == "__main__":
-    main()
+    stream = st.text_input("Enter the s
