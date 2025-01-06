@@ -2,121 +2,103 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import streamlit as st
-import re
 
-
-def clean_row_data(row_text):
+def fetch_html(url):
     """
-    Cleans the row text by removing unwanted details like links, extra spaces, and hidden elements.
-
+    Fetch the HTML content from the given URL.
     Args:
-        row_text: The raw text from a table row.
+    - url (str): The target URL.
+    
+    Returns:
+    - str: HTML content of the page.
+    """
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.text
+    else:
+        st.error(f"Failed to fetch URL: {url}. Status Code: {response.status_code}")
+        return None
+
+def parse_html_table(html_content, table_id=None):
+    """
+    Parse HTML table dynamically based on table ID.
+    Args:
+    - html_content (str): The HTML content as a string.
+    - table_id (str): The ID of the table to parse (optional).
 
     Returns:
-        Cleaned text.
+    - DataFrame: Parsed table data as a pandas DataFrame.
     """
-    # Remove extra spaces and unwanted content
-    row_text = re.sub(r"\s{2,}", " ", row_text)  # Replace multiple spaces with a single space
-    row_text = re.sub(r"\n|\t", "", row_text)  # Remove newlines and tabs
-    return row_text.strip()
-
-
-def scrape_nirf_rankings(category):
-    """
-    Scrapes NIRF India rankings for a specified category.
-
-    Args:
-        category: The category of the rankings (e.g., 'engineering', 'management', 'university').
-
-    Returns:
-        A pandas DataFrame containing the rankings data (rank, name, city, state, score).
-    """
-    base_url = "https://www.nirfindia.org/Rankings/2024/"
-    category_url = f"{base_url}{category}Ranking.html"
-
-    response = requests.get(category_url)
-    if response.status_code != 200:
-        st.error("Failed to fetch data. Please check the category.")
-        return pd.DataFrame()
-
-    soup = BeautifulSoup(response.content, "html.parser")
-    table = soup.find("table", {"id": "tbl_overall"})
-
+    soup = BeautifulSoup(html_content, "html.parser")
+    
+    # Find table by ID or default to the first table
+    if table_id:
+        table = soup.find("table", {"id": table_id})
+    else:
+        table = soup.find("table")
+    
     if not table:
-        st.error("Ranking table not found.")
+        st.error(f"Table with ID '{table_id}' not found.")
         return pd.DataFrame()
 
-    # Extract all rows (both odd and even)
-    rows = table.find_all("tr")[1:]  # Skip the header row
-
-    # Initialize lists to store data
-    ins_id = []
-    names = []
-    cities = []
-    states = []
-    ranks = []
-    scores = []
-
+    # Extract headers
+    headers = []
+    header_row = table.find("thead")
+    if header_row:
+        headers = [th.text.strip() for th in header_row.find_all("th")]
+    
+    # Extract rows
+    rows = table.find("tbody").find_all("tr")
+    data = []
     for row in rows:
         columns = row.find_all("td")
-        if len(columns) >= 6:  # Ensure sufficient columns exist
-            # Extract and clean each column's text
-            inid = clean_row_data(columns[0].text.strip())
-            name = clean_row_data(columns[1].text.strip())
-            city = clean_row_data(columns[2].text.strip())
-            state = clean_row_data(columns[3].text.strip())
-            score = clean_row_data(columns[4].text.strip())
-            rank = clean_row_data(columns[5].text.strip())
+        row_data = [col.text.strip() for col in columns]
+        data.append(row_data)
 
-            # Append cleaned data to respective lists
-            ins_id.append(inid)
-            names.append(name)
-            cities.append(city)
-            states.append(state)
-            scores.append(score)
-            ranks.append(rank)
+    # Handle missing headers
+    if not headers and data:
+        headers = [f"Column {i+1}" for i in range(len(data[0]))]
 
-    # Create and return a DataFrame
-    data = {
-        "Institute ID": ins_id,
-        "Institution Name": names,
-        "City": cities,
-        "State": states,
-        "Rank": ranks,
-        "Score": scores
-    }
-    return pd.DataFrame(data)
+    # Create DataFrame
+    return pd.DataFrame(data, columns=headers)
 
+# URLs for College and Research rankings
+urls = {
+    "college": "https://www.nirfindia.org/Rankings/2024/CollegeRanking.html",
+    "research": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
+}
 
-def main():
-    st.title("NIRF India Rankings Scraper")
+# Streamlit UI elements
+st.title('NIRF Rankings 2024')
+st.sidebar.header("Select Ranking Type")
 
-    category = st.selectbox(
-        "Select the category you want to scrape:",
-        ["Engineering", "Law", "Management", "University", "Medical", "Pharmacy", "Architecture"]
-    )
+# Get user input for ranking choice
+choice = st.sidebar.radio("Choose Ranking Data", ('College', 'Research'))
 
-    if st.button("Get Rankings"):
-        if category:
-            category_url_name = category.capitalize()  # Format the category for the URL
-            df = scrape_nirf_rankings(category_url_name)
+st.write(f"Fetching {choice} Ranking Data...")
 
-            if not df.empty:
-                st.write(f"Top NIRF Rankings for {category}:")
-                st.dataframe(df)
-
-                csv = df.to_csv(index=False)
-                st.download_button(
-                    label="Download CSV",
-                    data=csv,
-                    file_name=f"nirf_{category.lower()}_rankings.csv",
-                    mime="text/csv"
-                )
-            else:
-                st.write(f"No rankings found for {category}.")
+if choice.lower() in urls:
+    url = urls[choice.lower()]
+    html_content = fetch_html(url)
+    
+    if html_content:
+        # Parse the table (specify table ID if known, else leave as None)
+        table_id = "tbl_overall"  # Adjust table_id as needed or set to None
+        data = parse_html_table(html_content, table_id)
+        
+        if not data.empty:
+            # Display the data table
+            st.subheader(f"{choice} Ranking Data")
+            st.dataframe(data)
+            
+            # Option to download the data
+            st.download_button(
+                label="Download CSV",
+                data=data.to_csv(index=False).encode('utf-8'),
+                file_name=f"{choice.lower()}_ranking_2024.csv",
+                mime="text/csv"
+            )
         else:
-            st.warning("Please select a category.")
-
-
-if __name__ == "__main__":
-    main()
+            st.error(f"No data found for {choice} ranking.")
+else:
+    st.error("Invalid choice. Please select either 'College' or 'Research'.")
