@@ -55,6 +55,10 @@ def parse_html_table(html_content, table_id=None):
         row_data = [col.text.strip() for col in columns]
         data.append(row_data)
 
+    # Print headers and data for debugging
+    st.write(f"Extracted Headers: {headers}")
+    st.write(f"Extracted Data (First 3 rows): {data[:3]}")
+
     # Handle missing headers
     if not headers and data:
         headers = [f"Column {i+1}" for i in range(len(data[0]))]
