@@ -59,6 +59,14 @@ def parse_html_table(html_content, table_id=None):
     if not headers and data:
         headers = [f"Column {i+1}" for i in range(len(data[0]))]
 
+    # Ensure each row has the same number of columns as headers
+    max_columns = len(headers)
+    for row in data:
+        while len(row) < max_columns:
+            row.append(None)  # Add missing data as None
+        if len(row) > max_columns:
+            row = row[:max_columns]  # Truncate extra data
+    
     # Create DataFrame
     return pd.DataFrame(data, columns=headers)
 
