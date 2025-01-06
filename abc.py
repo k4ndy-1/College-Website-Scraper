@@ -2,115 +2,140 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import streamlit as st
+import re
 
-def fetch_html(url):
+def clean_row_data(row_text):
     """
-    Fetch the HTML content from the given URL.
+    Cleans the row text by removing unwanted details like 'More DetailsClose', 'TLR', 'RPC', etc.
+    
     Args:
-    - url (str): The target URL.
-    
+        row_text: The raw text from a table row.
+        
     Returns:
-    - str: HTML content of the page.
+        Cleaned text.
     """
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        st.error(f"Failed to fetch URL: {url}. Status Code: {response.status_code}")
-        return None
+    # Remove unwanted patterns using regular expressions
+    unwanted_patterns = [
+        r"More Details.*",  # Matches 'More Details' and everything after
+        r"TLR \(.*?\)",      # Matches 'TLR (100)' and similar patterns
+        r"RPC \(.*?\)",      # Matches 'RPC (100)' and similar patterns
+        r"GO \(.*?\)",       # Matches 'GO (100)' and similar patterns
+        r"OI \(.*?\)",       # Matches 'OI (100)' and similar patterns
+        r"PERCEPTION \(.*?\)", # Matches 'PERCEPTION (100)' and similar patterns
+        r"\|",              # Matches '|' symbol
+        r"\s{2,}",           # Matches multiple spaces and replaces with a single space
+    ]
+    
+    for pattern in unwanted_patterns:
+        row_text = re.sub(pattern, "", row_text)
+    
+    return row_text.strip()
 
-def parse_html_table(html_content, table_id=None):
+def scrape_nirf_rankings(category):
     """
-    Parse HTML table dynamically based on table ID.
+    Scrapes NIRF India rankings for a specified category.
+
     Args:
-    - html_content (str): The HTML content as a string.
-    - table_id (str): The ID of the table to parse (optional).
+        category: The category of the rankings (e.g., 'engineering', 'management', 'university').
 
     Returns:
-    - DataFrame: Parsed table data as a pandas DataFrame.
+        A pandas DataFrame containing the rankings data (rank, name, city, score).
     """
-    soup = BeautifulSoup(html_content, "html.parser")
+    # Base URL and the category URL pattern
+    base_url = "https://www.nirfindia.org/Rankings/2024/"
     
-    # Find table by ID or default to the first table
-    if table_id:
-        table = soup.find("table", {"id": table_id})
-    else:
-        table = soup.find("table")
+    # URL based on the selected category
+    category_url = f"{base_url}{category}Ranking.html"
+    response = requests.get(category_url)
     
+    if response.status_code != 200:
+        st.error("Failed to fetch data. Please check the category.")
+        return pd.DataFrame()
+    
+    soup = BeautifulSoup(response.content, "html.parser")
+    
+    # Find the ranking table using the provided table ID
+    table = soup.find("table", {"id": "tbl_overall"})
+
     if not table:
-        st.error(f"Table with ID '{table_id}' not found.")
+        st.error("Ranking table not found")
         return pd.DataFrame()
 
-    # Extract headers
-    headers = []
-    header_row = table.find("thead")
-    if header_row:
-        headers = [th.text.strip() for th in header_row.find_all("th")]
+    # Parse the table rows
+    rows = table.find_all("tr")[1:]  # Skip header row
     
-    # Extract rows
-    rows = table.find("tbody").find_all("tr")
-    data = []
+    # Extracting the required details
+    ins_id = []
+    ranks = []
+    names = []
+    cities = []
+    scores = []
+    states = []
+    
     for row in rows:
         columns = row.find_all("td")
-        row_data = [col.text.strip() for col in columns]
-        data.append(row_data)
-
-    # Print headers and data for debugging
-    st.write(f"Extracted Headers: {headers}")
-    st.write(f"Extracted Data (First 3 rows): {data[:3]}")
-
-    # Handle missing headers
-    if not headers and data:
-        headers = [f"Column {i+1}" for i in range(len(data[0]))]
-
-    # Ensure each row has the same number of columns as headers
-    max_columns = len(headers)
-    for row in data:
-        while len(row) < max_columns:
-            row.append(None)  # Add missing data as None
-        if len(row) > max_columns:
-            row = row[:max_columns]  # Truncate extra data
-    
-    # Create DataFrame
-    return pd.DataFrame(data, columns=headers)
-
-# URLs for College and Research rankings
-urls = {
-    "college": "https://www.nirfindia.org/Rankings/2024/CollegeRanking.html",
-    "research": "https://www.nirfindia.org/Rankings/2024/ResearchRanking.html",
-}
-
-# Streamlit UI elements
-st.title('NIRF Rankings 2024')
-st.sidebar.header("Select Ranking Type")
-
-# Get user input for ranking choice
-choice = st.sidebar.radio("Choose Ranking Data", ('College', 'Research'))
-
-st.write(f"Fetching {choice} Ranking Data...")
-
-if choice.lower() in urls:
-    url = urls[choice.lower()]
-    html_content = fetch_html(url)
-    
-    if html_content:
-        # Parse the table (specify table ID if known, else leave as None)
-        table_id = "tbl_overall"  # Adjust table_id as needed or set to None
-        data = parse_html_table(html_content, table_id)
-        
-        if not data.empty:
-            # Display the data table
-            st.subheader(f"{choice} Ranking Data")
-            st.dataframe(data)
+        if len(columns) > 1:
+            inid = clean_row_data(columns[0].text.strip())
+            name = clean_row_data(columns[1].text.strip())
+            city = clean_row_data(columns[2].text.strip())
+            state = clean_row_data(columns[3].text.strip())
+            rank = clean_row_data(columns[4].text.strip())
+            score = clean_row_data(columns[-1].text.strip())  # Assuming the last column contains the score
             
-            # Option to download the data
-            st.download_button(
-                label="Download CSV",
-                data=data.to_csv(index=False).encode('utf-8'),
-                file_name=f"{choice.lower()}_ranking_2024.csv",
-                mime="text/csv"
-            )
+            # Append cleaned data to lists
+            ins_id.append(inid)
+            names.append(name)
+            cities.append(city)
+            states.append(state)
+            ranks.append(rank)
+            scores.append(score)
+
+    # Create a DataFrame
+    data = {
+        "Institute ID": ins_id,
+        "Institution Name": names,
+        "City": cities,
+        "State": states,
+        "Rank": ranks,
+        "Score": scores
+    }
+    
+    df = pd.DataFrame(data)
+    return df
+
+# Streamlit App main function
+def main():
+    st.title("NIRF India Rankings Scraper")
+
+    # Ask the user to input the category
+    category = st.selectbox(
+        "Select the category you want to scrape:",
+        ["Engineering", "Law", "Management", "University", "Medical", "Pharmacy", "Architecture"]
+    )
+
+    # Scrape the data for the selected category
+    if st.button("Get Rankings"):
+        if category:
+            # Convert category to the appropriate format for the URL
+            category_url_name = category.capitalize()  # Ensuring the first letter is capitalized
+            df = scrape_nirf_rankings(category_url_name)
+
+            if not df.empty:
+                st.write(f"Top NIRF Rankings for {category.capitalize()}:")
+                st.dataframe(df)
+
+                # Add the option to download the result as a CSV
+                csv = df.to_csv(index=False)
+                st.download_button(
+                    label="Download CSV",
+                    data=csv,
+                    file_name=f"nirf_{category.lower()}_rankings.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.write(f"No rankings found for {category.capitalize()}.")
         else:
-            st.error(f"No data found for {choice} ranking.")
-else:
-    st.error("Invalid choice. Please select either 'College' or 'Research'.")
+            st.warning("Please select a category.")
+
+if __name__ == "__main__":
+    main()   
