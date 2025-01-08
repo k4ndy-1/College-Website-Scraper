@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import streamlit as st
-import re
+import re as re
 
 def clean_row_data(row_text):
     """
